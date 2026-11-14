@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuestionarios Ciclo Inicial Atletismo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tests Atletismo">
+<style>
+/* Layout idea: iOS-style grouped screens. Translucent nav and action dock float over
+   the content; each module keeps its lane number as the one piece of track identity. */
+:root{
+  --bg:#F2F2F7; --surface:#FFFFFF; --ink:#1C1C1E; --muted:#66666B;
+  --sep:rgba(60,60,67,.2); --fill:rgba(118,118,128,.14); --thumb:#FFFFFF;
+  --accent:#0B5FD9; --accent-bg:rgba(11,95,217,.09); --on-accent:#FFFFFF; --lane:#FFD60A;
+  --ok:#1D8539; --ok-bg:#E3F4E7; --bad:#CF2A1F; --bad-bg:#FCE7E5; --switch:#34C759;
+  --bar:rgba(242,242,247,.76); --scrim:rgba(0,0,0,.36);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 6px 20px rgba(0,0,0,.05);
+  --ease:cubic-bezier(.32,.72,0,1);
+  --font:system-ui,-apple-system,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000; --surface:#1C1C1E; --ink:#F5F5F7; --muted:#A1A1A8;
+    --sep:rgba(120,120,128,.36); --fill:rgba(118,118,128,.28); --thumb:#636366;
+    --accent:#2F7BF5; --accent-bg:rgba(61,139,255,.2); --on-accent:#FFFFFF; --lane:#FFD60A;
+    --ok:#30D158; --ok-bg:rgba(48,209,88,.17); --bad:#FF6259; --bad-bg:rgba(255,69,58,.2); --switch:#30D158;
+    --bar:rgba(0,0,0,.68); --scrim:rgba(0,0,0,.56);
+    --shadow:none;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#1C1C1E; --ink:#F5F5F7; --muted:#A1A1A8;
+  --sep:rgba(120,120,128,.36); --fill:rgba(118,118,128,.28); --thumb:#636366;
+  --accent:#2F7BF5; --accent-bg:rgba(61,139,255,.2); --on-accent:#FFFFFF; --lane:#FFD60A;
+  --ok:#30D158; --ok-bg:rgba(48,209,88,.17); --bad:#FF6259; --bad-bg:rgba(255,69,58,.2); --switch:#30D158;
+  --bar:rgba(0,0,0,.68); --scrim:rgba(0,0,0,.56);
+  --shadow:none;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:100%/1.4 var(--font);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;text-align:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[tabindex="-1"]:focus{outline:none}
+h1,h2,p,ul{margin:0;padding:0}
+ul{list-style:none}
+svg{display:block}
+#app{min-height:100%;display:flex;flex-direction:column;overflow-x:clip}
+.view{flex:1;display:flex;flex-direction:column;width:100%;max-width:40rem;margin:0 auto}
+.content{flex:1;padding:.5rem 1rem 1.5rem;display:flex;flex-direction:column;gap:1.5rem}
+
+/* Type */
+.large{display:flex;flex-direction:column;gap:.375rem;padding-top:.5rem}
+.home .large{padding-top:2.25rem}
+.eyebrow{font-size:.8125rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.large h1{font-size:2.125rem;line-height:1.1;font-weight:700;letter-spacing:-.022em;text-wrap:balance}
+.large h1.long{font-size:1.75rem;letter-spacing:-.018em}
+.sub{font-size:1.0625rem;color:var(--muted);max-width:34ch}
+.sect{font-size:.8125rem;font-weight:400;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);padding:0 1rem .5rem}
+.foot{font-size:.8125rem;color:var(--muted);padding:.5rem 1rem 0}
+.num{font-variant-numeric:tabular-nums}
+
+/* Nav: translucent material, content scrolls under it */
+.nav{position:sticky;top:0;z-index:5;background:var(--bar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
+.nav-in{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:2.75rem;padding:0 .5rem}
+.navbtn{justify-self:start;display:flex;align-items:center;gap:.125rem;min-height:2.75rem;padding:0 .5rem 0 .25rem;color:var(--accent);font-size:1.0625rem;border-radius:.625rem;transition:opacity .12s ease-out}
+.navbtn:active{opacity:.45}
+.navtitle{font-size:1.0625rem;font-weight:600;letter-spacing:-.01em}
+.prog{height:3px;background:var(--fill);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);transition:transform .5s var(--ease)}
+
+/* Grouped lists */
+.group{background:var(--surface);border-radius:1.125rem;overflow:hidden;box-shadow:var(--shadow)}
+.group>li{position:relative}
+.group>li+li::before{content:"";position:absolute;top:0;left:var(--inset,1rem);right:0;height:1px;background:var(--sep);transform:scaleY(.5)}
+.row{display:flex;align-items:center;gap:.875rem;width:100%;min-height:4.5rem;padding:.75rem 1rem;transition:background-color .15s ease-out}
+button.row:active{background:var(--fill)}
+.badge{flex:0 0 2.75rem;height:2.75rem;border-radius:.75rem;background:var(--accent);color:var(--lane);display:flex;align-items:center;justify-content:center;font-size:1.375rem;font-weight:700;border-bottom:3px solid var(--lane)}
+.row.off .badge{background:var(--fill);color:var(--muted);border-bottom-color:transparent}
+.row-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:.125rem}
+.row-title{font-size:1.0625rem;font-weight:600;letter-spacing:-.01em;line-height:1.25}
+.row.off .row-title{color:var(--muted)}
+.row-sub{font-size:.9375rem;color:var(--muted)}
+.row-end{display:flex;align-items:center;gap:.375rem;color:var(--muted);font-size:1.0625rem;white-space:nowrap}
+.row.plain{min-height:3.25rem;justify-content:space-between}
+.row.plain label{flex:1;font-size:1.0625rem}
+
+/* Segmented control with sliding thumb */
+.seg{position:relative;display:grid;grid-template-columns:1fr 1fr;background:var(--fill);border-radius:.75rem;padding:2px}
+.seg .thumb{position:absolute;top:2px;bottom:2px;left:2px;width:calc(50% - 2px);background:var(--thumb);border-radius:.625rem;box-shadow:0 1px 4px rgba(0,0,0,.14);transition:transform .38s var(--ease)}
+.seg[data-mode="examen"] .thumb{transform:translateX(100%)}
+.seg button{position:relative;min-height:2.75rem;text-align:center;font-size:.9375rem;font-weight:500;border-radius:.625rem}
+.seg button[aria-pressed="true"]{font-weight:600}
+
+/* Switch */
+.switch{appearance:none;-webkit-appearance:none;flex:0 0 51px;width:51px;height:31px;margin:0;border-radius:16px;background:var(--fill);position:relative;cursor:pointer;transition:background-color .25s ease}
+.switch::before{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.22);transition:transform .32s var(--ease)}
+.switch:checked{background:var(--switch)}
+.switch:checked::before{transform:translateX(20px)}
+
+/* Dock: floating action layer */
+.dock{position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;gap:.625rem;padding:.75rem 1rem 1rem;background:var(--bar);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
+.btn{flex:1 1 9rem;min-height:3.125rem;padding:0 1.25rem;border-radius:.875rem;background:var(--accent);color:var(--on-accent);font-size:1.0625rem;font-weight:600;letter-spacing:-.01em;text-align:center;transition:transform .12s ease-out,opacity .2s ease,background-color .2s ease}
+.btn:active:not([disabled]){transform:scale(.97);opacity:.85}
+.btn[disabled]{opacity:.38;cursor:default}
+.btn.secondary{background:var(--fill);color:var(--accent)}
+.btn.danger{background:var(--bad-bg);color:var(--bad)}
+
+/* Question */
+.q{font-size:1.375rem;line-height:1.28;font-weight:600;letter-spacing:-.014em;text-wrap:pretty;padding:.5rem .25rem 0}
+.opts{display:flex;flex-direction:column;gap:.625rem}
+.opt{display:flex;gap:.75rem;align-items:flex-start;width:100%;background:var(--surface);border:1.5px solid transparent;border-radius:1rem;padding:.875rem 1rem;min-height:3.5rem;box-shadow:var(--shadow);transition:transform .12s ease-out,background-color .22s ease,border-color .22s ease,opacity .3s ease}
+.opt:active:not([disabled]){transform:scale(.98)}
+.opt .k{flex:0 0 1.75rem;height:1.75rem;border-radius:50%;border:1.5px solid var(--sep);display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:600;text-transform:uppercase;color:var(--muted);transition:background-color .22s ease,border-color .22s ease,color .22s ease,transform .38s var(--ease)}
+.opt .t{flex:1;min-width:0;padding-top:.125rem;font-size:1.0625rem;line-height:1.35}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-bg)}
+.opt[aria-pressed="true"] .k{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)}
+.opt.ok .k{background:var(--ok);border-color:var(--ok);color:var(--surface);transform:scale(1.08)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.opt.bad .k{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+.opt[disabled]{cursor:default}
+.opt.dim{opacity:.5}
+.fb{display:flex;flex-direction:column;gap:.125rem;padding:.875rem 1rem;border-radius:1rem;background:var(--ok-bg);color:var(--ok);font-weight:600;font-size:1.0625rem;animation:materialize .42s var(--ease) both}
+.fb.bad{background:var(--bad-bg);color:var(--bad)}
+.fb small{font-size:.9375rem;font-weight:400;color:var(--ink)}
+
+/* Result */
+.scorecard{display:flex;flex-wrap:wrap;align-items:center;gap:1.25rem;background:var(--surface);border-radius:1.375rem;padding:1.25rem;box-shadow:var(--shadow)}
+.ring{position:relative;flex:0 0 7.5rem;width:7.5rem;height:7.5rem}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{stroke:var(--fill)}
+.ring .arc{stroke:var(--accent);stroke-linecap:round;animation:draw 1s var(--ease) both}
+.ring .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.ring .mid b{font-size:2.5rem;font-weight:700;letter-spacing:-.03em}
+.ring .mid span{font-size:.8125rem;color:var(--muted);margin-top:.125rem}
+.score-text{flex:1 1 10rem;display:flex;flex-direction:column;gap:.25rem}
+.score-text .nota{font-size:1.75rem;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.score-text p{color:var(--muted);font-size:.9375rem}
+.rev{--inset:3.25rem}
+.rev .row{align-items:flex-start;min-height:0;padding:.875rem 1rem}
+.mark{flex:0 0 1.5rem;height:1.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8125rem;font-weight:700;background:var(--ok-bg);color:var(--ok);margin-top:.0625rem}
+.mark.bad{background:var(--bad-bg);color:var(--bad)}
+.rev .rq{font-size:1rem;font-weight:600;line-height:1.3}
+.rev .ra{font-size:.9375rem;color:var(--muted);line-height:1.35}
+.rev .ra b{color:var(--ink);font-weight:500}
+.rev .ra.yours{color:var(--bad)}
+
+/* Sheet */
+dialog{border:0;padding:1.25rem;border-radius:1.5rem;background:var(--surface);color:var(--ink);width:min(calc(100% - 1.5rem),26rem);margin:auto auto .75rem;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog[open]{display:flex;flex-direction:column;gap:.375rem;animation:rise .45s var(--ease) both}
+dialog::backdrop{background:var(--scrim);animation:fade .25s ease both}
+dialog h2{font-size:1.25rem;font-weight:700;letter-spacing:-.015em}
+dialog p{color:var(--muted);font-size:.9375rem}
+dialog .acts{display:flex;gap:.625rem;margin-top:.875rem}
+
+/* Motion: forward pushes from the right, back returns the same way */
+@keyframes push{from{opacity:0;transform:translateX(1.75rem)}}
+@keyframes pop{from{opacity:0;transform:translateX(-1.75rem)}}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(2.5rem)}}
+@keyframes materialize{from{opacity:0;transform:scale(.96);filter:blur(6px)}}
+@keyframes draw{from{stroke-dashoffset:var(--c)}}
+.a-push{animation:push .44s var(--ease) both}
+.a-pop{animation:pop .44s var(--ease) both}
+.a-fade{animation:fade .3s ease both}
+
+@media (prefers-reduced-motion:reduce){
+  .a-push,.a-pop,dialog[open],.fb{animation:fade .2s ease both}
+  .ring .arc{animation:none}
+  .seg .thumb,.switch::before,.prog i,.opt,.opt .k,.btn{transition-duration:.01ms}
+  .btn:active:not([disabled]),.opt:active:not([disabled]){transform:none}
+}
+@media (prefers-reduced-transparency:reduce){
+  .nav,.dock{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+}
+@media (prefers-contrast:more){
+  .nav,.dock{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+  .group,.opt,.scorecard{border:1.5px solid var(--ink)}
+  .opt[aria-pressed="true"]{border-width:3px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<dialog id="sheet" aria-labelledby="sheet-t">
+  <h2 id="sheet-t">¿Salir del test?</h2>
+  <p>Se perderán las respuestas de este intento.</p>
+  <div class="acts"><button class="btn secondary" data-act="stay">Seguir</button><button class="btn danger" data-act="quit-yes">Salir</button></div>
+</dialog>
+<script>
+/* ============================================================
+   BANCO DE PREGUNTAS
+   Para añadir un módulo: rellena su array "questions".
+   Cada pregunta: { q: "enunciado", o: ["opción", ...], a: índice de la correcta (0 = primera) }
+   ============================================================ */
+const MODULES = [
+  { id: "bases", lane: 1, name: "Bases del comportamiento deportivo", questions: [] },
+  { id: "auxilios", lane: 2, name: "Primeros auxilios", questions: [
+    { q: "Una persona no responde y jadea de forma irregular. La conducta correcta es:",
+      o: ["Esperar un minuto.", "Considerar respiración normal.", "Llamar al 112 e iniciar RCP."], a: 2 },
+    { q: "En una hemorragia masiva de extremidad no controlada con presión, el torniquete se coloca:",
+      o: ["Sobre la articulación.", "5-7 cm por encima y se anota la hora.", "Se afloja cada diez minutos."], a: 1 },
+    { q: "Ante una convulsión tónico-clónica se debe:",
+      o: ["Introducir un objeto en la boca.", "Sujetar con fuerza.", "Proteger la cabeza y cronometrar."], a: 2 },
+    { q: "En una quemadura térmica reciente:",
+      o: ["Hielo directo.", "Agua corriente fresca durante 20 minutos.", "Romper ampollas."], a: 1 },
+    { q: "En lactantes con atragantamiento grave conscientes:",
+      o: ["Compresiones abdominales.", "Cinco golpes en espalda y cinco compresiones torácicas.", "Barrido digital a ciegas."], a: 1 },
+    { q: "En RCP pediátrica entrenada se inicia con:",
+      o: ["Cinco ventilaciones.", "Una descarga.", "Dos minutos de observación."], a: 0 },
+    { q: "Ante exposición química ocular:",
+      o: ["Neutralizar químicamente.", "Tapar sin lavar.", "Irrigar de inmediato con abundante agua."], a: 2 },
+    { q: "FAST sirve para reconocer:",
+      o: ["Ictus.", "Hipotermia.", "Fractura."], a: 0 },
+    { q: "El apoyo psicológico inicial consiste principalmente en:",
+      o: ["Forzar un relato emocional.", "Observar, escuchar y conectar.", "Prometer que todo saldrá bien."], a: 1 },
+    { q: "Si el entorno no es seguro:",
+      o: ["Entrar rápido.", "Esperar sin alertar.", "Protegerse, alertar y no exponerse sin medios."], a: 2 }
+  ] },
+  { id: "adaptada", lane: 3, name: "Actividad física adaptada y discapacidad", questions: [] },
+  { id: "organizacion", lane: 4, name: "Organización deportiva", questions: [
+    { q: "¿Cómo definirías la organización del deporte en España?",
+      o: ["Como un sistema exclusivamente estatal.",
+          "Como un sistema descentralizado.",
+          "Como un sistema exclusivamente autonómico.",
+          "Como un sistema gestionado únicamente por las federaciones deportivas."], a: 1 },
+    { q: "Según la Constitución Española, ¿qué deben fomentar los poderes públicos de acuerdo con su artículo 43.3?",
+      o: ["Exclusivamente el deporte profesional.",
+          "Únicamente las competiciones internacionales.",
+          "La Educación Física y el Deporte.",
+          "Solamente el deporte federado."], a: 2 },
+    { q: "¿Cuál es la principal norma deportiva estatal estudiada en esta unidad?",
+      o: ["La Ley 15/1994, de 28 de diciembre.",
+          "Ley 39/2022, de 30 de diciembre, del Deporte.",
+          "Ley 7/1985, Reguladora de las Bases del Régimen Local.",
+          "Decreto 159/1996."], a: 1 },
+    { q: "¿Cuál de las siguientes se considera una fuente primaria para comprobar la publicación oficial de una disposición?",
+      o: ["La página web de un club deportivo.",
+          "Una red social de una federación.",
+          "El Boletín Oficial del Estado (BOE).",
+          "Un manual de organización deportiva."], a: 2 },
+    { q: "¿Qué es el Registro de Entidades Deportivas?",
+      o: ["Una base de datos exclusiva de competiciones oficiales.",
+          "Un registro de instalaciones deportivas municipales.",
+          "Un registro exclusivo de deportistas de alto nivel.",
+          "Un registro administrativo en el que se inscriben oficialmente clubes, federaciones y demás entidades deportivas."], a: 3 },
+    { q: "En el ámbito local, ¿qué caracteriza a la gestión directa de un servicio deportivo?",
+      o: ["El propio ayuntamiento presta el servicio mediante su estructura administrativa o mediante las fórmulas públicas legalmente previstas.",
+          "El servicio debe ser gestionado obligatoriamente por una federación.",
+          "El servicio se presta exclusivamente mediante una empresa privada.",
+          "La Comunidad Autónoma asume automáticamente la gestión municipal."], a: 0 },
+    { q: "En las relaciones entre la legislación deportiva estatal y autonómica, además de la jerarquía normativa, ¿qué principio debe tenerse especialmente en cuenta?",
+      o: ["El principio de antigüedad.",
+          "El principio de territorialidad deportiva.",
+          "El principio de competencia.",
+          "El principio de profesionalización."], a: 2 },
+    { q: "¿Qué establece la regla básica del principio de jerarquía normativa?",
+      o: ["Todas las normas tienen el mismo rango.",
+          "Una norma de rango inferior no puede contradecir una norma de rango superior.",
+          "Las normas federativas prevalecen sobre las leyes.",
+          "Una orden tiene siempre mayor rango que una ley."], a: 1 },
+    { q: "¿Cuál de las siguientes es una actuación del Consejo Superior de Deportes recogida en la unidad?",
+      o: ["Gestionar directamente todas las instalaciones deportivas municipales.",
+          "Aprobar los presupuestos de todos los clubes deportivos.",
+          "Intervenir en la representación y participación internacional del deporte español.",
+          "Organizar todas las competiciones deportivas autonómicas."], a: 2 },
+    { q: "¿Qué son las leyes del deporte de las Comunidades Autónomas?",
+      o: ["Normas aprobadas por el Estado para regular exclusivamente las federaciones españolas.",
+          "Reglamentos internos de las federaciones autonómicas.",
+          "Normas aprobadas por cada Comunidad Autónoma para ordenar, regular, promover y desarrollar el deporte en su territorio.",
+          "Normas municipales para gestionar instalaciones deportivas."], a: 2 },
+    { q: "Aunque las federaciones autonómicas son entidades privadas, pueden ejercer:",
+      o: ["Determinadas funciones públicas de carácter administrativo por delegación.",
+          "Funciones legislativas estatales.",
+          "Competencias exclusivas de los ayuntamientos.",
+          "Funciones judiciales."], a: 0 },
+    { q: "¿Cuál de las siguientes características define a las federaciones deportivas autonómicas?",
+      o: ["Son organismos públicos dependientes de los ayuntamientos.",
+          "Son entidades privadas sin ánimo de lucro y con personalidad jurídica propia.",
+          "Son empresas privadas con ánimo de lucro.",
+          "Son órganos territoriales del Consejo Superior de Deportes."], a: 1 },
+    { q: "¿Cuál es la función principal de una federación deportiva autonómica?",
+      o: ["Gestionar las instalaciones deportivas municipales.",
+          "Financiar exclusivamente a los clubes profesionales.",
+          "Promover, organizar, regular y desarrollar su modalidad deportiva en el ámbito autonómico.",
+          "Organizar exclusivamente competiciones internacionales."], a: 2 },
+    { q: "Según la Ley 15/1994 de la Comunidad de Madrid, ¿cuáles son los dos órganos necesarios de gobierno y representación de una federación deportiva autonómica?",
+      o: ["Presidente y Junta Directiva.",
+          "Asamblea General y Comité Técnico.",
+          "Asamblea General y Presidente.",
+          "Comisión Delegada y Secretaría General."], a: 2 },
+    { q: "Según la Ley 15/1994 de la Comunidad de Madrid, ¿cuántos tipos de clubes deportivos se establecen?",
+      o: ["Dos.", "Tres.", "Cuatro.", "Siete."], a: 0 },
+    { q: "¿Cuál es una característica del club deportivo elemental en la Comunidad de Madrid?",
+      o: ["Debe constituirse obligatoriamente mediante escritura notarial.",
+          "Es la modalidad de constitución más sencilla y sus fundadores deben ser personas físicas.",
+          "Debe estar formado por un mínimo de cinco federaciones.",
+          "Solo puede practicar deporte no competitivo."], a: 1 },
+    { q: "¿Qué caracteriza al club deportivo básico?",
+      o: ["No necesita estatutos.",
+          "Solo puede estar integrado por deportistas profesionales.",
+          "Presenta una estructura jurídica y organizativa más formal y requiere acta fundacional ante notario por, al menos, cinco fundadores.",
+          "No necesita inscripción."], a: 2 },
+    { q: "¿Cuál de las siguientes constituye una vía de financiación mediante recursos propios de una entidad deportiva?",
+      o: ["Cuotas de socios, licencias, inscripciones o actividades.",
+          "Únicamente subvenciones autonómicas.",
+          "Exclusivamente donaciones de Administraciones Públicas.",
+          "Solo convenios con federaciones internacionales."], a: 0 },
+    { q: "En la gestión de apoyos al asociacionismo deportivo, ¿por qué es importante realizar un seguimiento adecuado de los procedimientos administrativos?",
+      o: ["Porque las ayudas se conceden automáticamente.",
+          "Porque los procedimientos pueden ser largos y relativamente complejos y es necesario controlar las distintas fases hasta la justificación.",
+          "Porque únicamente los ayuntamientos pueden solicitar subvenciones.",
+          "Porque las entidades deportivas están exentas de justificar las ayudas."], a: 1 },
+    { q: "¿Cuál de las siguientes NO aparece en la unidad como forma de apoyo de las Administraciones Públicas a clubes y asociaciones deportivas?",
+      o: ["Subvenciones y ayudas económicas.",
+          "Cesión y utilización de instalaciones deportivas.",
+          "Asesoramiento y asistencia técnica.",
+          "Garantía automática de beneficios económicos para la entidad."], a: 3 }
+  ] }
+];
+
+/* ---------- almacenamiento por dispositivo (mejor nota y preferencias) ---------- */
+const KEY = "cia-cuestionarios-v1";
+function loadStore(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch(e){ return {}; } }
+function saveStore(){ try { localStorage.setItem(KEY, JSON.stringify(store)); } catch(e){} }
+let store = loadStore();
+store.best = store.best || {};
+if (store.shuffle === undefined) store.shuffle = true;
+store.mode = store.mode || "practica";
+
+/* ---------- utilidades ---------- */
+let S = { view: "home" };
+let offlineReady = false;
+const OFF_NOTE = " Lista para usar sin conexión.";
+const app = document.getElementById("app");
+const sheet = document.getElementById("sheet");
+const $ = s => app.querySelector(s);
+const mod = id => MODULES.find(m => m.id === id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const LET = "abcdefgh";
+const CHEV_L = '<svg width="12" height="20" viewBox="0 0 12 20" fill="none" aria-hidden="true"><path d="M10 2 2 10l8 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CHEV_R = '<svg width="8" height="14" viewBox="0 0 8 14" fill="none" aria-hidden="true"><path d="m1.5 1.5 5 5.5-5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></svg>';
+const MODE_DESC = { practica: "Corrige cada respuesta al momento y te enseña la correcta.", examen: "No corrige hasta el final. Puedes volver atrás y cambiar respuestas." };
+function shuffled(n, doIt){
+  const a = Array.from({ length: n }, (_, i) => i);
+  if (doIt) for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function nota(ok, total){ return (Math.round(ok / total * 100) / 10).toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+function buzz(p){ try { if (navigator.vibrate) navigator.vibrate(p); } catch(e){} }
+const answered = () => S.answers.filter(a => a !== null).length;
+
+/* ---------- lógica ---------- */
+function startQuiz(id, only){
+  const m = mod(id);
+  let order = only ? only.slice() : shuffled(m.questions.length, store.shuffle);
+  if (only && store.shuffle) order = shuffled(order.length, true).map(i => only[i]);
+  S = { view: "quiz", id, mode: store.mode, order, partial: !!only,
+        optOrder: order.map(qi => shuffled(m.questions[qi].o.length, store.shuffle)),
+        answers: order.map(() => null), pos: 0 };
+  go("push");
+}
+function finish(){
+  const m = mod(S.id);
+  const ok = S.order.filter((qi, i) => S.answers[i] === m.questions[qi].a).length;
+  S.view = "result"; S.ok = ok;
+  if (!S.partial) {
+    const b = store.best[S.id];
+    if (!b || ok / S.order.length > b.ok / b.total) { store.best[S.id] = { ok, total: S.order.length }; saveStore(); }
+  }
+  go("push");
+}
+
+/* ---------- vistas ---------- */
+function nav(act, label, title, prog){
+  return `<nav class="nav"><div class="nav-in">
+    <button class="navbtn" data-act="${act}">${CHEV_L}<span>${label}</span></button>
+    <span class="navtitle num" id="navt">${title}</span><span></span></div>
+    ${prog ? '<div class="prog" aria-hidden="true"><i id="progbar"></i></div>' : ""}</nav>`;
+}
+function vHome(){
+  const rows = MODULES.map(m => {
+    const n = m.questions.length, b = store.best[m.id];
+    const inner = `<span class="badge" aria-hidden="true">${m.lane}</span>
+      <span class="row-main"><span class="row-title">${esc(m.name)}</span>
+      <span class="row-sub">${n ? `${n} preguntas` : "Pendiente"}</span></span>
+      ${n ? `<span class="row-end num">${b ? `${b.ok}/${b.total}` : ""}${CHEV_R}</span>` : ""}`;
+    return n
+      ? `<li><button class="row" data-act="open" data-id="${m.id}" aria-label="${esc(m.name)}, ${n} preguntas${b ? `, mejor nota ${b.ok} de ${b.total}` : ""}">${inner}</button></li>`
+      : `<li><div class="row off">${inner}</div></li>`;
+  }).join("");
+  return `<div class="view home"><main class="content">
+    <header class="large"><span class="eyebrow">Ciclo Inicial · Atletismo</span><h1>Cuestionarios</h1>
+      <p class="sub">Repasa los tests de cada módulo, las veces que quieras.</p></header>
+    <section><h2 class="sect">Módulos</h2><ul class="group" style="--inset:4.625rem">${rows}</ul>
+      <p class="foot">Tu mejor nota aparece junto a cada módulo y se guarda solo en este dispositivo.<span id="offnote">${offlineReady ? OFF_NOTE : ""}</span></p></section>
+  </main></div>`;
+}
+function vSetup(){
+  const m = mod(S.id), b = store.best[m.id];
+  const sb = k => `<button data-act="mode" data-mode="${k}" aria-pressed="${store.mode === k}">${k === "practica" ? "Práctica" : "Examen"}</button>`;
+  return `<div class="view">${nav("home", "Módulos", "", false)}<main class="content">
+    <header class="large"><span class="eyebrow">Ciclo Inicial · Atletismo</span><h1 class="long">${esc(m.name)}</h1>
+      <p class="sub num">${m.questions.length} preguntas${b ? ` · Mejor nota ${b.ok}/${b.total}` : ""}</p></header>
+    <section><h2 class="sect">Modo</h2>
+      <div class="seg" id="seg" data-mode="${store.mode}"><span class="thumb"></span>${sb("practica")}${sb("examen")}</div>
+      <p class="foot" id="modedesc">${MODE_DESC[store.mode]}</p></section>
+    <ul class="group"><li><div class="row plain"><label for="shuffle">Barajar preguntas y respuestas</label>
+      <input type="checkbox" role="switch" class="switch" id="shuffle" ${store.shuffle ? "checked" : ""}></div></li></ul>
+  </main><div class="dock"><button class="btn" data-act="start">Empezar</button></div></div>`;
+}
+function vQuizShell(){
+  return `<div class="view">${nav("quit", "Salir", "", true)}<main class="content" id="qc"></main><div class="dock" id="dock"></div></div>`;
+}
+function fillQuestion(dir){
+  const m = mod(S.id), i = S.pos, n = S.order.length, q = m.questions[S.order[i]];
+  const opts = S.optOrder[i].map((oi, k) =>
+    `<li><button class="opt" data-act="pick" data-o="${oi}" data-k="${LET[k]}" aria-pressed="false"><span class="k" aria-hidden="true">${LET[k]}</span><span class="t">${esc(q.o[oi])}</span></button></li>`).join("");
+  $("#qc").innerHTML = `<h1 class="q" id="qh" tabindex="-1">${esc(q.q)}</h1><ul class="opts">${opts}</ul><div id="fb" aria-live="polite"></div>`;
+  $("#navt").textContent = `${i + 1} de ${n}`;
+  const next = `<button class="btn" id="next" data-act="next">${i === n - 1 ? "Ver resultado" : "Siguiente"}</button>`;
+  $("#dock").innerHTML = S.mode === "practica" ? next
+    : `<button class="btn secondary" data-act="prev" ${i === 0 ? "disabled" : ""}>Anterior</button>${next}`;
+  syncAnswer(false);
+  animate(dir);
+  window.scrollTo(0, 0);
+  if (dir) $("#qh").focus({ preventScroll: true });
+}
+/* Patches the question in place so state changes animate from where they are */
+function syncAnswer(fresh){
+  const m = mod(S.id), i = S.pos, q = m.questions[S.order[i]], ans = S.answers[i];
+  const revealed = S.mode === "practica" && ans !== null;
+  app.querySelectorAll(".opt").forEach(b => {
+    const oi = Number(b.dataset.o), k = b.querySelector(".k"), chosen = ans === oi;
+    b.setAttribute("aria-pressed", chosen);
+    b.classList.toggle("ok", revealed && oi === q.a);
+    b.classList.toggle("bad", revealed && chosen && oi !== q.a);
+    b.classList.toggle("dim", revealed && !chosen && oi !== q.a);
+    b.disabled = revealed;
+    k.textContent = revealed && oi === q.a ? "✓" : revealed && chosen ? "✕" : b.dataset.k;
+  });
+  const fb = $("#fb");
+  if (revealed && (fresh || !fb.firstChild)) {
+    const good = ans === q.a;
+    fb.innerHTML = good ? `<p class="fb">Correcto</p>`
+      : `<p class="fb bad">Incorrecto<small>La respuesta correcta es: ${esc(q.o[q.a])}</small></p>`;
+    if (fresh) { buzz(good ? 10 : [14, 70, 14]); fb.firstChild.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  }
+  $("#next").disabled = ans === null;
+  $("#progbar").style.transform = `scaleX(${answered() / S.order.length})`;
+}
+function vResult(){
+  const m = mod(S.id), n = S.order.length, ok = S.ok, C = 2 * Math.PI * 52;
+  const failed = S.order.filter((qi, i) => S.answers[i] !== m.questions[qi].a).length;
+  const msg = ok === n ? "Pleno. Ni un fallo." : ok / n >= .5 ? `Te han faltado ${n - ok}. Repásalas abajo.` : "Toca repasar el tema y volver a intentarlo.";
+  const rev = S.order.map((qi, i) => {
+    const q = m.questions[qi], good = S.answers[i] === q.a;
+    return `<li><div class="row"><span class="mark ${good ? "" : "bad"}" role="img" aria-label="${good ? "Acertada" : "Fallada"}">${good ? "✓" : "✕"}</span>
+      <span class="row-main"><span class="rq">${esc(q.q)}</span>
+      ${good ? "" : `<span class="ra yours">Tu respuesta: ${esc(q.o[S.answers[i]])}</span>`}
+      <span class="ra">Correcta: <b>${esc(q.o[q.a])}</b></span></span></div></li>`;
+  }).join("");
+  return `<div class="view">${nav("home", "Módulos", S.partial ? "Solo falladas" : "Resultado", false)}<main class="content">
+    <section class="scorecard">
+      <div class="ring"><svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+        <circle class="track" cx="60" cy="60" r="52" stroke-width="10"/>
+        <circle class="arc" cx="60" cy="60" r="52" stroke-width="10" style="--c:${C};stroke-dasharray:${C};stroke-dashoffset:${C * (1 - ok / n)}"/></svg>
+        <div class="mid num"><b>${ok}</b><span>de ${n}</span></div></div>
+      <div class="score-text"><span class="eyebrow">${esc(m.name)}</span>
+        <span class="nota num">Nota ${nota(ok, n)}</span><p>${msg}</p></div>
+    </section>
+    <section><h2 class="sect">Revisión</h2><ul class="group rev">${rev}</ul></section>
+  </main><div class="dock">
+    ${failed ? `<button class="btn secondary" data-act="again">Repetir todo</button><button class="btn" data-act="retry-failed">Repasar falladas</button>`
+             : `<button class="btn" data-act="again">Repetir el test</button>`}
+  </div></div>`;
+}
+function animate(dir){
+  const c = app.querySelector(".content"); if (!c || !dir) return;
+  c.classList.remove("a-push", "a-pop", "a-fade"); void c.offsetWidth; c.classList.add("a-" + dir);
+}
+function go(dir){
+  app.innerHTML = ({ home: vHome, setup: vSetup, quiz: vQuizShell, result: vResult }[S.view] || vHome)();
+  if (S.view === "quiz") fillQuestion(null);
+  animate(dir);
+  window.scrollTo(0, 0);
+}
+function quit(){ S = { view: "setup", id: S.id }; go("pop"); }
+
+/* ---------- eventos ---------- */
+document.addEventListener("touchstart", () => {}, { passive: true }); /* enables :active on iOS */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const act = b.dataset.act, m = S.id && mod(S.id);
+  if (act === "home") { S = { view: "home" }; go("pop"); }
+  else if (act === "open") { S = { view: "setup", id: b.dataset.id }; go("push"); }
+  else if (act === "mode") {
+    store.mode = b.dataset.mode; saveStore();
+    $("#seg").dataset.mode = store.mode;
+    app.querySelectorAll("#seg button").forEach(x => x.setAttribute("aria-pressed", x.dataset.mode === store.mode));
+    $("#modedesc").textContent = MODE_DESC[store.mode];
+  }
+  else if (act === "start" || act === "again") startQuiz(S.id);
+  else if (act === "retry-failed") startQuiz(S.id, S.order.filter((qi, i) => S.answers[i] !== m.questions[qi].a));
+  else if (act === "quit") { if (answered() && sheet.showModal) sheet.showModal(); else quit(); }
+  else if (act === "stay") sheet.close();
+  else if (act === "quit-yes") { sheet.close(); quit(); }
+  else if (act === "pick") { S.answers[S.pos] = Number(b.dataset.o); syncAnswer(true); }
+  else if (act === "prev") { if (S.pos > 0) { S.pos--; fillQuestion("pop"); } }
+  else if (act === "next") { if (S.pos < S.order.length - 1) { S.pos++; fillQuestion("push"); } else finish(); }
+});
+sheet.addEventListener("click", e => { if (e.target === sheet) sheet.close(); });
+app.addEventListener("change", e => {
+  if (e.target.id === "shuffle") { store.shuffle = e.target.checked; saveStore(); }
+});
+
+/* ---------- uso sin conexión: guarda la app en el dispositivo en la primera visita ---------- */
+if ("serviceWorker" in navigator && window.top === window && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.ready.then(() => {
+      offlineReady = true;
+      const n = document.getElementById("offnote"); if (n) n.textContent = OFF_NOTE;
+    }).catch(() => {});
+  });
+}
+
+/* ---------- arranque (conserva el intento si la página se actualiza) ---------- */
+function start(data){
+  if (data && data.view && (!data.id || mod(data.id))) S = data;
+  go(null);
+}
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) hot.snapshot(() => S);
+if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+</script>
+</body>
+</html>
